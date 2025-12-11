@@ -12,7 +12,6 @@
   <!-- Tailwind Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    /* Tailwind 客製色系（主色 #9DC0DF）與樣式擴充 */
     tailwind.config = {
       theme: {
         extend: {
@@ -23,13 +22,12 @@
               200: '#cfe2ef',
               300: '#b7d3e7',
               400: '#9fc4df',
-              500: '#9dc0df', /* 主色 */
+              500: '#9dc0df',
               600: '#7aa7c8',
               700: '#588aa0',
               800: '#3e6577',
               900: '#233c4b'
             },
-            // 補充日系常用柔和灰
             softgray: {
               50: '#fbfbfc',
               100: '#f6f7f8',
@@ -44,7 +42,7 @@
             'xxl': '1.25rem'
           },
           boxShadow: {
-            'soft': '0 8px 20px rgba(36,64,86,0.06)', /* 柔和偏藍陰影 */
+            'soft': '0 8px 20px rgba(36,64,86,0.06)',
             'soft-sm': '0 4px 12px rgba(36,64,86,0.04)'
           }
         }
@@ -56,7 +54,6 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 
   <style>
-    /* 全局：日系字體與背景柔和處理 */
     html,body,#app { height:100%; }
     body {
       background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
@@ -65,43 +62,41 @@
       color: #263849;
     }
 
-    /* 卡片：更柔的圓角與陰影 */
     .card-shadow { box-shadow: 0 8px 20px rgba(36,64,86,0.06); border-radius: 14px; }
     .card-soft { box-shadow: 0 4px 12px rgba(36,64,86,0.04); border-radius: 12px; }
 
-    /* 按鈕過渡與 focus */
     .btn-focus:focus { outline: none; box-shadow: 0 0 0 4px rgba(157,192,223,0.22); border-radius: 12px; }
     .btn-ghost { background: transparent; border: 1px solid rgba(157,192,223,0.12); }
 
-    /* 標題與文字風格 */
     h1, h2 { letter-spacing: -0.01em; }
     .muted { color: #7b8790; }
 
-    /* 手機 App feel */
     .scroll-area { -webkit-overflow-scrolling: touch; overflow-y: auto; }
-    /* 微細分割線使用淺灰色 */
+
     .soft-divider { border-color: rgba(36,64,86,0.06); }
   </style>
 </head>
+
 <body>
   <div id="app" class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-white rounded-xl card-shadow overflow-hidden">
+
       <!-- header -->
       <header class="px-4 py-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h1 class="text-lg font-semibold text-slate-800">福岡2026旅遊誡條:</h1>
           <p class="text-sm text-slate-400">
-  絕不表現不耐煩的態度<br>
-  絕不對自己沒安排的行程指手畫腳<br>
-  該花錢就花錢 錢是賺來花的<br>
-  累了就說不硬撐 該休息就休息<br>
-  開開心心出遊 平平安安回家!
-</p>
+            絕不表現不耐煩的態度<br>
+            絕不對自己沒安排的行程指手畫腳<br>
+            該花錢就花錢 錢是賺來花的<br>
+            累了就說不硬撐 該休息就休息<br>
+            開開心心出遊 平平安安回家!
+          </p>
         </div>
         <button @click="resetAll" class="text-sm text-primary-600 bg-primary-50 px-3 py-1 rounded-lg">重設</button>
       </header>
 
-      <!-- 主選單 -->
+      <!-- tabs -->
       <nav class="px-3 py-3 flex gap-2 overflow-x-auto">
         <button :class="tab==='itinerary'?activeBtn:inactiveBtn" @click="tab='itinerary'">行程表</button>
         <button :class="tab==='map'?activeBtn:inactiveBtn" @click="tab='map'">地圖</button>
@@ -110,37 +105,66 @@
         <button :class="tab==='notes'?activeBtn:inactiveBtn" @click="tab='notes'">備忘錄</button>
       </nav>
 
-      <!-- 內容區 -->
       <main class="p-4 h-[70vh] scroll-area">
-        <!-- 行程表 -->
+
+                <!-- 行程表（按日期分組顯示） -->
         <section v-show="tab==='itinerary'">
           <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-md font-medium text-slate-800">行程表</h2>
+            <h2 class="text-md font-medium text-slate-800">行程表（按日期）</h2>
             <div class="text-sm text-slate-400">自動儲存</div>
           </div>
 
-          <div class="space-y-3">
-            <div v-for="(item, idx) in itinerary" :key="item.id" class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
-              <div class="flex-shrink-0">
-                <div class="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 font-semibold">
-                  {{ idx+1 }}
+          <div class="space-y-4">
+            <!-- 無資料 -->
+            <div v-if="itinerary.length===0"
+                 class="text-sm text-slate-400 p-4 bg-white rounded-xl">
+              尚無任何行程，請新增。
+            </div>
+
+            <!-- 日期分組 -->
+            <div v-for="(items, date) in groupedItinerary" :key="date" class="mb-4">
+              <div class="text-sm font-semibold text-primary-600 mb-2">
+                {{ date }}
+              </div>
+
+              <div class="space-y-3">
+                <div v-for="(item, idx) in items" :key="item.id"
+                     class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
+
+                  <div class="flex-shrink-0">
+                    <div class="w-11 h-11 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 font-semibold">
+                      {{ idx+1 }}
+                    </div>
+                  </div>
+
+                  <div class="flex-1">
+                    <div class="text-sm font-medium text-slate-800">{{ item.title }}</div>
+                    <div class="text-xs text-slate-400 mt-1">{{ item.time }}</div>
+                    <div class="text-xs text-slate-500 mt-2">{{ item.note }}</div>
+                  </div>
+
+                  <div class="flex flex-col gap-2">
+                    <button @click="editItinById(item.id)" class="text-sm text-primary-600">編輯</button>
+                    <button @click="deleteItinById(item.id)" class="text-sm text-red-500">刪除</button>
+                  </div>
                 </div>
-              </div>
-              <div class="flex-1">
-                <div class="text-sm font-medium text-slate-800">{{ item.title }}</div>
-                <div class="text-xs text-slate-400 mt-1">{{ item.time }}</div>
-                <div class="text-xs text-slate-500 mt-2">{{ item.note }}</div>
-              </div>
-              <div class="flex flex-col gap-2">
-                <button @click="editItin(idx)" class="text-sm text-primary-600">編輯</button>
-                <button @click="deleteItin(idx)" class="text-sm text-red-500">刪除</button>
               </div>
             </div>
 
+            <!-- 新增行程 -->
             <div class="p-3 bg-primary-50 rounded-xl">
-              <input v-model="newItin.title" placeholder="行程標題" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
-              <input v-model="newItin.time" placeholder="時間 (例如：2026-01-10 09:00)" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
-              <textarea v-model="newItin.note" rows="2" placeholder="備註" class="w-full p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200"></textarea>
+              <input v-model="newItin.date" type="date"
+                     class="w-full mb-2 p-2 rounded-md border border-transparent focus:ring-2 focus:ring-primary-200" />
+
+              <input v-model="newItin.time" placeholder="時間（例如：09:00 或 09:00-10:00）"
+                     class="w-full mb-2 p-2 rounded-md border border-transparent focus:ring-2 focus:ring-primary-200" />
+
+              <input v-model="newItin.title" placeholder="行程標題"
+                     class="w-full mb-2 p-2 rounded-md border border-transparent focus:ring-2 focus:ring-primary-200" />
+
+              <textarea v-model="newItin.note" rows="2" placeholder="備註"
+                        class="w-full p-2 rounded-md border border-transparent focus:ring-2 focus:ring-primary-200"></textarea>
+
               <div class="mt-2 flex gap-2">
                 <button @click="addItin" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">新增行程</button>
                 <button @click="clearNewItin" class="py-2 px-3 rounded-lg bg-white border">清除</button>
@@ -151,49 +175,43 @@
 
         <!-- 地圖 -->
         <section v-show="tab==='map'">
-          <h2 class="text-md font-medium text-slate-800 mb-2">地圖</h2>
-          <p class="text-xs text-slate-400 mb-3">搜尋地點或使用嵌入地圖。</p>
+          <h2 class="text-md font-medium text-slate-800 mb-3">地圖查詢</h2>
 
-          <div class="mb-3">
-            <input v-model="mapQuery" @keyup.enter="searchMap" placeholder="輸入地點並按 Enter 搜尋（例如：Fukuoka）" class="w-full p-2 rounded-lg border focus:outline-none" />
-            <div class="mt-2 flex gap-2">
-              <button @click="searchMap" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">搜尋</button>
-              <button @click="centerDefault" class="py-2 px-3 rounded-lg bg-white border">回到預設</button>
-            </div>
+          <div class="flex gap-2 mb-3">
+            <input v-model="mapQuery" placeholder="搜尋地點" class="flex-1 p-2 rounded-md border focus:ring-2 focus:ring-primary-200"/>
+            <button @click="searchMap" class="px-3 py-2 bg-primary-600 text-white rounded-lg">搜尋</button>
           </div>
+          <button @click="centerDefault" class="text-sm text-primary-600 mb-3">回到預設地圖</button>
 
-          <!-- 使用 OpenStreetMap iframe -->
-          <div class="w-full h-64 rounded-xl overflow-hidden border">
-            <iframe :src="osmSrc" class="w-full h-full" ref="mapFrame" loading="lazy"></iframe>
-          </div>
+          <iframe :src="osmSrc" class="w-full h-80 rounded-xl border"></iframe>
         </section>
 
         <!-- 記帳 -->
         <section v-show="tab==='expenses'">
-          <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-md font-medium text-slate-800">記帳</h2>
-            <div class="text-sm text-slate-400">共支出：<span class="font-semibold text-primary-600">{{ totalExpensesFormatted }}</span></div>
+          <h2 class="text-md font-medium text-slate-800 mb-3">記帳</h2>
+
+          <div class="p-3 bg-primary-50 rounded-xl mb-4">
+            <input v-model="newExpense.title" placeholder="支出項目" class="w-full mb-2 p-2 rounded-md"/>
+            <input v-model.number="newExpense.amount" type="number" placeholder="金額" class="w-full mb-2 p-2 rounded-md"/>
+            <input v-model="newExpense.date" type="date" class="w-full mb-2 p-2 rounded-md"/>
+
+            <button @click="addExpense" class="w-full py-2 rounded-lg bg-primary-600 text-white">新增</button>
+          </div>
+
+          <div class="text-sm font-medium text-slate-800 mb-2">
+            總金額：<span class="text-primary-600">{{ totalExpensesFormatted }}</span>
           </div>
 
           <div class="space-y-3">
-            <div v-for="(e, i) in expenses" :key="e.id" class="p-3 bg-white border rounded-xl flex items-center justify-between">
+            <div v-for="(e,i) in expenses" :key="e.id"
+                 class="p-3 bg-white border rounded-xl card-shadow flex justify-between items-center">
               <div>
                 <div class="text-sm font-medium">{{ e.title }}</div>
                 <div class="text-xs text-slate-400">{{ e.date }}</div>
               </div>
-              <div class="text-sm font-medium text-slate-800">HK$ {{ e.amount.toFixed(2) }}</div>
-              <div class="ml-2">
+              <div class="flex items-center gap-3">
+                <div class="text-primary-600 font-semibold">{{ e.amount }}</div>
                 <button @click="removeExpense(i)" class="text-sm text-red-500">刪除</button>
-              </div>
-            </div>
-
-            <div class="p-3 bg-primary-50 rounded-xl">
-              <input v-model="newExpense.title" placeholder="項目" class="w-full mb-2 p-2 rounded-md" />
-              <input v-model.number="newExpense.amount" type="number" placeholder="金額 (HK$)" class="w-full mb-2 p-2 rounded-md" />
-              <input v-model="newExpense.date" type="date" class="w-full mb-2 p-2 rounded-md" />
-              <div class="flex gap-2">
-                <button @click="addExpense" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">加入</button>
-                <button @click="clearNewExpense" class="py-2 px-3 rounded-lg bg-white border">清除</button>
               </div>
             </div>
           </div>
@@ -201,238 +219,376 @@
 
         <!-- 購物清單 -->
         <section v-show="tab==='shopping'">
-          <h2 class="text-md font-medium text-slate-800 mb-2">購物清單</h2>
-          <div class="space-y-2">
-            <div v-for="(s, i) in shopping" :key="s.id" class="flex items-center gap-3 p-2 bg-white rounded-xl border">
-              <input type="checkbox" v-model="s.done" class="w-5 h-5" />
-              <div class="flex-1">
-                <div :class="{'line-through text-slate-400': s.done}">{{ s.text }}</div>
+          <h2 class="text-md font-medium text-slate-800 mb-3">購物清單</h2>
+
+          <div class="p-3 bg-primary-50 rounded-xl mb-4">
+            <input v-model="newShop.text" placeholder="品項" class="w-full mb-2 p-2 rounded-md"/>
+            <input v-model="newShop.note" placeholder="備註" class="w-full mb-2 p-2 rounded-md"/>
+            <button @click="addShop" class="w-full py-2 rounded-lg bg-primary-600 text-white">新增</button>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="(s,i) in shopping" :key="s.id"
+                 class="p-3 bg-white border rounded-xl card-shadow flex justify-between items-start">
+              <div>
+                <div class="text-sm font-medium">{{ s.text }}</div>
                 <div class="text-xs text-slate-400">{{ s.note }}</div>
               </div>
               <button @click="removeShopping(i)" class="text-sm text-red-500">刪除</button>
-            </div>
-
-            <div class="p-3 bg-primary-50 rounded-xl">
-              <input v-model="newShop.text" placeholder="品項" class="w-full mb-2 p-2 rounded-md" />
-              <input v-model="newShop.note" placeholder="備註" class="w-full mb-2 p-2 rounded-md" />
-              <div class="flex gap-2">
-                <button @click="addShop" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">加入清單</button>
-                <button @click="clearNewShop" class="py-2 px-3 rounded-lg bg-white border">清除</button>
-              </div>
             </div>
           </div>
         </section>
 
         <!-- 備忘錄 -->
         <section v-show="tab==='notes'">
-          <h2 class="text-md font-medium text-slate-800 mb-2">備忘錄</h2>
+          <h2 class="text-md font-medium text-slate-800 mb-3">備忘錄</h2>
+
+          <div class="p-3 bg-primary-50 rounded-xl mb-4">
+            <input v-model="newNote.title" placeholder="標題" class="w-full mb-2 p-2 rounded-md"/>
+            <textarea v-model="newNote.content" rows="3" placeholder="內容" class="w-full mb-2 p-2 rounded-md"></textarea>
+            <button @click="addNote" class="w-full py-2 rounded-lg bg-primary-600 text-white">新增</button>
+          </div>
 
           <div class="space-y-3">
-            <div v-for="(n, i) in notes" :key="n.id" class="p-3 bg-white border rounded-xl">
+            <div v-for="(n,i) in notes" :key="n.id"
+                 class="p-3 bg-white border rounded-xl card-shadow">
               <div class="text-sm font-medium">{{ n.title }}</div>
-              <div class="text-xs text-slate-400 mt-1">{{ n.date }}</div>
-              <div class="text-sm text-slate-700 mt-2">{{ n.content }}</div>
-              <div class="mt-2 text-right">
-                <button @click="removeNote(i)" class="text-sm text-red-500">刪除</button>
-              </div>
-            </div>
-
-            <div class="p-3 bg-primary-50 rounded-xl">
-              <input v-model="newNote.title" placeholder="標題" class="w-full mb-2 p-2 rounded-md" />
-              <textarea v-model="newNote.content" rows="3" placeholder="內容" class="w-full p-2 rounded-md"></textarea>
-              <div class="mt-2 flex gap-2">
-                <button @click="addNote" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">新增備忘</button>
-                <button @click="clearNewNote" class="py-2 px-3 rounded-lg bg-white border">清除</button>
-              </div>
+              <div class="text-xs text-slate-500 mt-1">{{ n.date }}</div>
+              <div class="text-sm text-slate-700 mt-2 whitespace-pre-line">{{ n.content }}</div>
+              <button @click="removeNote(i)" class="mt-2 text-sm text-red-500">刪除</button>
             </div>
           </div>
         </section>
       </main>
-
-      <!-- footer -->
-      <footer class="px-4 py-3 border-t border-gray-100 text-xs text-slate-400 flex justify-between items-center">
-        <div>資料保存在此裝置 (localStorage)</div>
-        <div class="flex items-center gap-2">
-          <button @click="exportData" class="text-sm text-primary-600">匯出 JSON</button>
-          <button @click="importPrompt" class="text-sm text-slate-500">匯入 JSON</button>
-        </div>
-      </footer>
     </div>
-
-    <!-- 匯入彈窗（原生 prompt 簡單處理） -->
   </div>
 
-  <script>
-    const { createApp, ref, reactive, onMounted } = Vue;
+<script>
+const { createApp, ref, reactive, onMounted, computed } = Vue;
 
-    createApp({
-      setup() {
-        const tab = ref('itinerary');
+createApp({
+  setup() {
+    const tab = ref('itinerary');
 
-        // data keys
-        const STORAGE_KEY = 'travel_app_v1';
+    // data keys
+    const STORAGE_KEY = 'travel_app_v1';
 
-        // initial state
-        const state = reactive({
-          itinerary: [],
-          expenses: [],
-          shopping: [],
-          notes: []
-        });
+    // initial state
+    const state = reactive({
+      itinerary: [],
+      expenses: [],
+      shopping: [],
+      notes: []
+    });
 
-        // UI models for forms
-        const newItin = reactive({ title:'', time:'', note:'' });
-        const newExpense = reactive({ title:'', amount:0, date:'' });
-        const newShop = reactive({ text:'', note:'', done:false });
-        const newNote = reactive({ title:'', content:'', date:'' });
+    // UI models for forms (newItin 加入 date)
+    const newItin = reactive({ date:'', time:'', title:'', note:'' });
+    const newExpense = reactive({ title:'', amount:0, date:'' });
+    const newShop = reactive({ text:'', note:'', done:false });
+    const newNote = reactive({ title:'', content:'', date:'' });
 
-        // map search
-        const mapQuery = ref('');
-        const osmBase = 'https://www.openstreetmap.org/export/embed.html?';
+    // map search
+    const mapQuery = ref('');
+    const osmBase = 'https://www.openstreetmap.org/export/embed.html?';
 
-        // load from localStorage
-        function load() {
-          try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) {
-              const obj = JSON.parse(raw);
-              state.itinerary = obj.itinerary || [];
-              state.expenses = obj.expenses || [];
-              state.shopping = obj.shopping || [];
-              state.notes = obj.notes || [];
-            } else {
-              // sample default
-              state.itinerary = [
-                { id: cryptoId(), title:'抵達福岡機場', time:'2026-01-10 09:30', note:'取行李、購票' }
-              ];
-            }
-          } catch (e) {
-            console.error('load error', e);
-          }
+    // helpers
+    function cryptoId() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    // load from localStorage (兼容舊資料)
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const obj = JSON.parse(raw);
+          // 確保每筆 itinerary 都有 id, date, time, title, note
+          state.itinerary = (obj.itinerary || []).map(it => {
+            return {
+              id: it.id || cryptoId(),
+              date: it.date || (it.time ? (it.time.slice(0,10)) : ''), // 若舊資料無 date，嘗試從 time 取日期
+              time: it.time || '',
+              title: it.title || '',
+              note: it.note || ''
+            };
+          });
+          state.expenses = (obj.expenses || []).map(e => ({ id: e.id || cryptoId(), title: e.title || '', amount: Number(e.amount||0), date: e.date || '' }));
+          state.shopping = (obj.shopping || []).map(s => ({ id: s.id || cryptoId(), text: s.text || '', note: s.note || '', done: !!s.done }));
+          state.notes = (obj.notes || []).map(n => ({ id: n.id || cryptoId(), title: n.title || '', content: n.content || '', date: n.date || (new Date()).toLocaleString() }));
+        } else {
+          // 範例預設
+          state.itinerary = [
+            { id: cryptoId(), date: '2026-01-10', time:'09:30', title:'抵達福岡機場', note:'取行李、購票' }
+          ];
         }
-
-        function save() {
-          const obj = { itinerary: state.itinerary, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
-        }
-
-        // helpers
-        function cryptoId() {
-          return Math.random().toString(36).slice(2, 10);
-        }
-
-        // itinerary actions
-        function addItin() {
-          if (!newItin.title) return alert('請輸入行程標題');
-          state.itinerary.push({ id: cryptoId(), title: newItin.title, time: newItin.time || '', note: newItin.note || '' });
-          clearNewItin();
-          save();
-        }
-        function clearNewItin(){ newItin.title=''; newItin.time=''; newItin.note=''; }
-        function deleteItin(i){ if (confirm('確定刪除此行程？')) { state.itinerary.splice(i,1); save(); } }
-        function editItin(i){
-          const it = state.itinerary[i];
-          const t = prompt('編輯標題', it.title);
-          if (t !== null) { it.title = t; save(); }
-        }
-
-        // expenses
-        function addExpense(){
-          if (!newExpense.title || !newExpense.amount) return alert('請填寫項目與金額');
-          state.expenses.push({ id:cryptoId(), title:newExpense.title, amount: Number(newExpense.amount), date: newExpense.date || (new Date()).toISOString().slice(0,10) });
-          clearNewExpense(); save();
-        }
-        function clearNewExpense(){ newExpense.title=''; newExpense.amount=0; newExpense.date=''; }
-        function removeExpense(i){ if(confirm('刪除此支出？')) { state.expenses.splice(i,1); save(); } }
-        const totalExpenses = () => state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-        const totalExpensesFormatted = Vue.computed(()=> totalExpenses().toFixed(2));
-
-        // shopping
-        function addShop(){ if (!newShop.text) return alert('請輸入品項'); state.shopping.push({ id:cryptoId(), text:newShop.text, note:newShop.note || '', done:false }); clearNewShop(); save(); }
-        function clearNewShop(){ newShop.text=''; newShop.note=''; newShop.done=false; }
-        function removeShopping(i){ if(confirm('刪除此項目？')){ state.shopping.splice(i,1); save(); } }
-
-        // notes
-        function addNote(){ if (!newNote.title && !newNote.content) return alert('請輸入標題或內容'); state.notes.push({ id:cryptoId(), title:newNote.title, content:newNote.content, date:(new Date()).toLocaleString() }); clearNewNote(); save(); }
-        function clearNewNote(){ newNote.title=''; newNote.content=''; }
-        function removeNote(i){ if (confirm('刪除此備忘？')) { state.notes.splice(i,1); save(); } }
-
-        // map
-        const osmSrc = Vue.ref(osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
-        function searchMap(){
-          if (!mapQuery.value) return alert('請輸入搜尋字串');
-          // 使用 Nominatim 搜尋（直接呼叫 openstreetmap 查詢 URL）
-          const q = encodeURIComponent(mapQuery.value);
-          // 這裡使用 openstreetmap 的搜尋結果頁面，以方便在 iframe 顯示
-          osmSrc.value = 'https://www.openstreetmap.org/search?query=' + q + '#map=13';
-        }
-        function centerDefault() { osmSrc.value = osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik'; }
-
-        // export / import
-        function exportData(){
-          const data = { itinerary: state.itinerary, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          // 在 iOS 上使用 a 標籤觸發下載
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'travel-data.json';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(url);
-        }
-        function importPrompt(){
-          const txt = prompt('請貼上 JSON（整個匯出檔內容）以匯入：');
-          if (!txt) return;
-          try {
-            const obj = JSON.parse(txt);
-            if (confirm('確定以此資料覆蓋本地資料嗎？')) {
-              state.itinerary = obj.itinerary || [];
-              state.expenses = obj.expenses || [];
-              state.shopping = obj.shopping || [];
-              state.notes = obj.notes || [];
-              save();
-              alert('匯入完成');
-            }
-          } catch (e) {
-            alert('解析錯誤：請確認為有效的 JSON');
-          }
-        }
-
-        function resetAll(){
-          if (!confirm('將清除所有本機資料，確定？')) return;
-          state.itinerary = []; state.expenses=[]; state.shopping=[]; state.notes=[];
-          save();
-        }
-
-        // watch & load
-        onMounted(()=> {
-          load();
-          // auto-save on unload
-          window.addEventListener('beforeunload', save);
-        });
-
-        // expose to template
-        return {
-          tab,
-          mapQuery, osmSrc,
-          itinerary: Vue.toRefs(state).itinerary,
-          expenses: Vue.toRefs(state).expenses,
-          shopping: Vue.toRefs(state).shopping,
-          notes: Vue.toRefs(state).notes,
-          newItin, newExpense, newShop, newNote,
-          addItin, clearNewItin, deleteItin, editItin,
-          searchMap, centerDefault,
-          addExpense, clearNewExpense, removeExpense, totalExpensesFormatted,
-          addShop, clearNewShop, removeShopping,
-          addNote, clearNewNote, removeNote,
-          exportData, importPrompt, resetAll,
-          activeBtn: 'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
-          inactiveBtn: 'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
-        }
+      } catch (e) {
+        console.error('load error', e);
       }
-    }).mount('#app')
-  </script>
-</body>
-</html>
+    }
+
+    function save() {
+      const obj = {
+        itinerary: state.itinerary,
+        expenses: state.expenses,
+        shopping: state.shopping,
+        notes: state.notes
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    }
+
+    // --------------------------
+    // itinerary actions
+    // --------------------------
+    function addItin() {
+      if (!newItin.title) return alert('請輸入行程標題');
+      if (!newItin.date) return alert('請選擇日期');
+      state.itinerary.push({
+        id: cryptoId(),
+        date: newItin.date,
+        time: newItin.time || '',
+        title: newItin.title,
+        note: newItin.note || ''
+      });
+      clearNewItin();
+      save();
+      // 自動切換到該日期可視需求實作（此處不自動跳）
+    }
+
+    function clearNewItin() {
+      newItin.date = '';
+      newItin.time = '';
+      newItin.title = '';
+      newItin.note = '';
+    }
+
+    function editItinById(id) {
+      const it = state.itinerary.find(x => x.id === id);
+      if (!it) return;
+      // 使用 prompt 做簡單編輯（可改為 modal）
+      const title = prompt('編輯標題', it.title);
+      if (title === null) return; // 使用者取消則結束
+      it.title = title;
+
+      const date = prompt('編輯日期（YYYY-MM-DD）', it.date || '');
+      if (date !== null) it.date = date;
+
+      const time = prompt('編輯時間', it.time || '');
+      if (time !== null) it.time = time;
+
+      const note = prompt('編輯備註', it.note || '');
+      if (note !== null) it.note = note;
+
+      save();
+    }
+
+    function deleteItinById(id) {
+      if (!confirm('確定刪除此行程？')) return;
+      const idx = state.itinerary.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        state.itinerary.splice(idx, 1);
+        save();
+      }
+    }
+
+    // computed: grouped by date（日期升序），每個日期內按 time 排序
+    const groupedItinerary = computed(() => {
+      const groups = {};
+      state.itinerary.forEach(it => {
+        const d = it.date || '未指定日期';
+        if (!groups[d]) groups[d] = [];
+        groups[d].push(it);
+      });
+      // sort items inside each date by time (若無 time 則放後面)
+      Object.keys(groups).forEach(d => {
+        groups[d].sort((a, b) => {
+          const ta = (a.time || '').toString();
+          const tb = (b.time || '').toString();
+          if (!ta && !tb) return 0;
+          if (!ta) return 1;
+          if (!tb) return -1;
+          return ta.localeCompare(tb);
+        });
+      });
+      // build sorted object by date ascending (YYYY-MM-DD 比較可行)
+      const sortedDates = Object.keys(groups).sort((a,b) => {
+        // special handling for '未指定日期' -> 放最後
+        if (a === '未指定日期') return 1;
+        if (b === '未指定日期') return -1;
+        return a.localeCompare(b);
+      });
+      const result = {};
+      sortedDates.forEach(d => { result[d] = groups[d]; });
+      return result;
+    });
+
+    // --------------------------
+    // expenses
+    // --------------------------
+    function addExpense() {
+      if (!newExpense.title || !newExpense.amount) return alert('請填寫項目與金額');
+      state.expenses.push({
+        id: cryptoId(),
+        title: newExpense.title,
+        amount: Number(newExpense.amount),
+        date: newExpense.date || (new Date()).toISOString().slice(0,10)
+      });
+      clearNewExpense();
+      save();
+    }
+    function clearNewExpense() {
+      newExpense.title = '';
+      newExpense.amount = 0;
+      newExpense.date = '';
+    }
+    function removeExpense(i) {
+      if (!confirm('刪除此支出？')) return;
+      state.expenses.splice(i,1);
+      save();
+    }
+    const totalExpenses = () => state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+    const totalExpensesFormatted = computed(() => totalExpenses().toFixed(2));
+
+    // --------------------------
+    // shopping
+    // --------------------------
+    function addShop() {
+      if (!newShop.text) return alert('請輸入品項');
+      state.shopping.push({
+        id: cryptoId(),
+        text: newShop.text,
+        note: newShop.note || '',
+        done: false
+      });
+      clearNewShop();
+      save();
+    }
+    function clearNewShop() {
+      newShop.text = '';
+      newShop.note = '';
+      newShop.done = false;
+    }
+    function removeShopping(i) {
+      if (!confirm('刪除此項目？')) return;
+      state.shopping.splice(i,1);
+      save();
+    }
+
+    // --------------------------
+    // notes
+    // --------------------------
+    function addNote() {
+      if (!newNote.title && !newNote.content) return alert('請輸入標題或內容');
+      state.notes.push({
+        id: cryptoId(),
+        title: newNote.title,
+        content: newNote.content,
+        date: (new Date()).toLocaleString()
+      });
+      clearNewNote();
+      save();
+    }
+    function clearNewNote() {
+      newNote.title = '';
+      newNote.content = '';
+    }
+    function removeNote(i) {
+      if (!confirm('刪除此備忘？')) return;
+      state.notes.splice(i,1);
+      save();
+    }
+
+    // --------------------------
+    // map
+    // --------------------------
+    const osmSrc = ref(osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
+    function searchMap() {
+      if (!mapQuery.value) return alert('請輸入搜尋字串');
+      const q = encodeURIComponent(mapQuery.value);
+      osmSrc.value = 'https://www.openstreetmap.org/search?query=' + q + '#map=13';
+    }
+    function centerDefault() {
+      osmSrc.value = osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik';
+    }
+
+    // --------------------------
+    // export / import
+    // --------------------------
+    function exportData(){
+      const data = {
+        itinerary: state.itinerary,
+        expenses: state.expenses,
+        shopping: state.shopping,
+        notes: state.notes
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'travel-data.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importPrompt(){
+      const txt = prompt('請貼上 JSON（整個匯出檔內容）以匯入：');
+      if (!txt) return;
+      try {
+        const obj = JSON.parse(txt);
+        if (confirm('確定以此資料覆蓋本地資料嗎？')) {
+          state.itinerary = (obj.itinerary || []).map(it => ({
+            id: it.id || cryptoId(),
+            date: it.date || (it.time ? it.time.slice(0,10) : ''),
+            time: it.time || '',
+            title: it.title || '',
+            note: it.note || ''
+          }));
+          state.expenses = (obj.expenses || []).map(e => ({ id: e.id || cryptoId(), title: e.title || '', amount: Number(e.amount||0), date: e.date || '' }));
+          state.shopping = (obj.shopping || []).map(s => ({ id: s.id || cryptoId(), text: s.text || '', note: s.note || '', done: !!s.done }));
+          state.notes = (obj.notes || []).map(n => ({ id: n.id || cryptoId(), title: n.title || '', content: n.content || '', date: n.date || (new Date()).toLocaleString() }));
+          save();
+          alert('匯入完成');
+        }
+      } catch (e) {
+        alert('解析錯誤：請確認為有效的 JSON');
+      }
+    }
+
+    function resetAll(){
+      if (!confirm('將清除所有本機資料，確定？')) return;
+      state.itinerary = [];
+      state.expenses = [];
+      state.shopping = [];
+      state.notes = [];
+      save();
+    }
+
+    // onMounted
+    onMounted(() => {
+      load();
+      window.addEventListener('beforeunload', save);
+    });
+
+    // expose to template
+    return {
+      tab,
+      mapQuery, osmSrc,
+      itinerary: Vue.toRefs(state).itinerary,
+      expenses: Vue.toRefs(state).expenses,
+      shopping: Vue.toRefs(state).shopping,
+      notes: Vue.toRefs(state).notes,
+      newItin, newExpense, newShop, newNote,
+      addItin, clearNewItin, editItinById, deleteItinById,
+      addExpense, clearNewExpense, removeExpense, totalExpensesFormatted,
+      addShop, clearNewShop, removeShopping,
+      addNote, clearNewNote, removeNote,
+      searchMap, centerDefault,
+      exportData, importPrompt, resetAll,
+      groupedItinerary,
+      activeBtn: 'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
+      inactiveBtn: 'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
+    }
+  }
+}).mount('#app')
+</script>
