@@ -278,8 +278,7 @@ createApp({
       itinerary: [],
       expenses: [],
       shopping: [],
-      notes: [],
-      weatherData: {} // 用於存每日天氣
+      notes: []
     });
 
     // UI models for forms
@@ -293,7 +292,9 @@ createApp({
     const osmBase = 'https://www.openstreetmap.org/export/embed.html?';
 
     // helpers
-    function cryptoId() { return Math.random().toString(36).slice(2, 10); }
+    function cryptoId() {
+      return Math.random().toString(36).slice(2, 10);
+    }
 
     // load from localStorage
     function load() {
@@ -316,17 +317,22 @@ createApp({
             { id: cryptoId(), date: '2026-01-10', time:'09:30', title:'抵達福岡機場', note:'取行李、購票' }
           ];
         }
-      } catch (e) { console.error('load error', e); }
+      } catch (e) {
+        console.error('load error', e);
+      }
     }
 
     function save() {
-      const obj = { itinerary: state.itinerary, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
+      const obj = {
+        itinerary: state.itinerary,
+        expenses: state.expenses,
+        shopping: state.shopping,
+        notes: state.notes
+      };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
     }
 
-    // --------------------------
     // itinerary actions
-    // --------------------------
     function addItin() {
       if (!newItin.title) return alert('請輸入行程標題');
       if (!newItin.date) return alert('請選擇日期');
@@ -339,117 +345,109 @@ createApp({
       });
       clearNewItin();
       save();
-      fetchWeatherForDate(newItin.date); // 新增：新增行程時抓天氣
     }
 
-    function clearNewItin() { newItin.date=''; newItin.time=''; newItin.title=''; newItin.note=''; }
+    function clearNewItin() {
+      newItin.date = '';
+      newItin.time = '';
+      newItin.title = '';
+      newItin.note = '';
+    }
 
     function editItinById(id) {
       const it = state.itinerary.find(x => x.id === id);
       if (!it) return;
-      const title = prompt('編輯標題', it.title); if(title!==null) it.title=title;
-      const date = prompt('編輯日期（YYYY-MM-DD）', it.date||''); if(date!==null){ it.date=date; fetchWeatherForDate(date); }
-      const time = prompt('編輯時間', it.time||''); if(time!==null) it.time=time;
-      const note = prompt('編輯備註', it.note||''); if(note!==null) it.note=note;
+      const title = prompt('編輯標題', it.title);
+      if (title !== null) it.title = title;
+      const date = prompt('編輯日期（YYYY-MM-DD）', it.date || '');
+      if (date !== null) it.date = date;
+      const time = prompt('編輯時間 (HH:MM)', it.time || '');
+      if (time !== null) it.time = time;
+      const note = prompt('編輯備註', it.note || '');
+      if (note !== null) it.note = note;
       save();
     }
 
-    function deleteItinById(id) { 
-      if(!confirm('確定刪除此行程？')) return;
-      const idx = state.itinerary.findIndex(x=>x.id===id);
-      if(idx!==-1) state.itinerary.splice(idx,1);
-      save();
+    function deleteItinById(id) {
+      if (!confirm('確定刪除此行程？')) return;
+      const idx = state.itinerary.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        state.itinerary.splice(idx, 1);
+        save();
+      }
     }
 
-    // --------------------------
-    // 天氣抓取 (固定福岡座標)
-    // --------------------------
-    const fukuokaLat = 33.5902;
-    const fukuokaLon = 130.4017;
-
-    const weatherCodeMap = {
-      0:'晴',1:'主要晴',2:'多雲',3:'陰天',45:'霧',48:'霧',51:'小雨',53:'小雨',55:'毛毛雨',56:'霜雨',57:'霜雨',
-      61:'小雨',63:'中雨',65:'大雨',66:'凍雨',67:'凍雨',71:'小雪',73:'中雪',75:'大雪',77:'雪粒',80:'陣雨',81:'陣雨',82:'陣雨',
-      95:'雷雨',96:'雷陣雨',99:'雷陣雨'
-    };
-
-    async function fetchWeatherForDate(date) {
-      if(state.weatherData[date]) return; // 已有就不重抓
-      try {
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${fukuokaLat}&longitude=${fukuokaLon}&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Asia/Tokyo`);
-        const data = await res.json();
-        const idx = data.daily.time.findIndex(d=>d===date);
-        if(idx>=0){
-          state.weatherData[date] = {
-            tempMax: data.daily.temperature_2m_max[idx],
-            tempMin: data.daily.temperature_2m_min[idx],
-            weather: weatherCodeMap[data.daily.weathercode[idx]] || '未知'
-          };
-        }
-      } catch(e){ console.error('weather fetch error', e); }
-    }
-
-    // --------------------------
-    // computed: grouped by date
-    // --------------------------
-    const groupedItinerary = computed(()=>{
+    // computed: grouped by date，日期升序，每日期內按 time 排序
+    const groupedItinerary = computed(() => {
       const groups = {};
-      state.itinerary.forEach(it=>{
-        const d = it.date||'未指定日期';
-        if(!groups[d]) groups[d]=[];
+      state.itinerary.forEach(it => {
+        const d = it.date || '未指定日期';
+        if (!groups[d]) groups[d] = [];
         groups[d].push(it);
-        fetchWeatherForDate(d); // 依日期抓天氣
       });
-      Object.keys(groups).forEach(d=>{
-        groups[d].sort((a,b)=>{
-          const ta = a.time||''; const tb=b.time||'';
-          if(!ta&&!tb) return 0; if(!ta) return 1; if(!tb) return -1;
+      Object.keys(groups).forEach(d => {
+        groups[d].sort((a, b) => {
+          const ta = (a.time || '').toString();
+          const tb = (b.time || '').toString();
+          if (!ta && !tb) return 0;
+          if (!ta) return 1;
+          if (!tb) return -1;
           return ta.localeCompare(tb);
         });
       });
-      const sortedDates = Object.keys(groups).sort((a,b)=>{
-        if(a==='未指定日期') return 1; if(b==='未指定日期') return -1;
+      const sortedDates = Object.keys(groups).sort((a,b) => {
+        if (a === '未指定日期') return 1;
+        if (b === '未指定日期') return -1;
         return a.localeCompare(b);
       });
-      const result={};
-      sortedDates.forEach(d=>{
-        result[d] = { items: groups[d], weather: state.weatherData[d] || null };
-      });
+      const result = {};
+      sortedDates.forEach(d => { result[d] = groups[d]; });
       return result;
     });
 
-    // --------------------------
-    // expenses, shopping, notes (保持原本邏輯)
-    // --------------------------
-    function addExpense(){ if(!newExpense.title||!newExpense.amount) return alert('請填寫項目與金額');
-      state.expenses.push({ id: cryptoId(), title: newExpense.title, amount: Number(newExpense.amount), date: newExpense.date||new Date().toISOString().slice(0,10) });
-      clearNewExpense(); save(); }
-    function clearNewExpense(){ newExpense.title=''; newExpense.amount=0; newExpense.date=''; }
-    function removeExpense(i){ if(!confirm('刪除此支出？')) return; state.expenses.splice(i,1); save(); }
-    const totalExpenses = ()=>state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-    const totalExpensesFormatted = computed(()=>totalExpenses().toFixed(2));
+    // expenses
+    function addExpense() {
+      if (!newExpense.title || !newExpense.amount) return alert('請填寫項目與金額');
+      state.expenses.push({
+        id: cryptoId(),
+        title: newExpense.title,
+        amount: Number(newExpense.amount),
+        date: newExpense.date || (new Date()).toISOString().slice(0,10)
+      });
+      clearNewExpense();
+      save();
+    }
+    function clearNewExpense() { newExpense.title=''; newExpense.amount=0; newExpense.date=''; }
+    function removeExpense(i) { if(confirm('刪除此支出？')) { state.expenses.splice(i,1); save(); } }
+    const totalExpenses = () => state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+    const totalExpensesFormatted = computed(() => totalExpenses().toFixed(2));
 
-    function addShop(){ if(!newShop.text) return alert('請輸入品項'); state.shopping.push({ id: cryptoId(), text: newShop.text, note:newShop.note||'', done:false }); clearNewShop(); save(); }
-    function clearNewShop(){ newShop.text=''; newShop.note=''; newShop.done=false; }
-    function removeShopping(i){ if(!confirm('刪除此項目？')) return; state.shopping.splice(i,1); save(); }
+    // shopping
+    function addShop() { if(!newShop.text) return alert('請輸入品項'); state.shopping.push({id:cryptoId(), text:newShop.text, note:newShop.note||'', done:false}); clearNewShop(); save(); }
+    function clearNewShop() { newShop.text=''; newShop.note=''; newShop.done=false; }
+    function removeShopping(i) { if(confirm('刪除此項目？')) { state.shopping.splice(i,1); save(); } }
 
-    function addNote(){ if(!newNote.title && !newNote.content) return alert('請輸入標題或內容'); state.notes.push({ id: cryptoId(), title:newNote.title, content:newNote.content, date:(new Date()).toLocaleString() }); clearNewNote(); save(); }
-    function clearNewNote(){ newNote.title=''; newNote.content=''; }
-    function removeNote(i){ if(!confirm('刪除此備忘？')) return; state.notes.splice(i,1); save(); }
+    // notes
+    function addNote() { if(!newNote.title && !newNote.content) return alert('請輸入標題或內容'); state.notes.push({id:cryptoId(), title:newNote.title, content:newNote.content, date:(new Date()).toLocaleString()}); clearNewNote(); save(); }
+    function clearNewNote() { newNote.title=''; newNote.content=''; }
+    function removeNote(i) { if(confirm('刪除此備忘？')) { state.notes.splice(i,1); save(); } }
 
-    const mapQuery = ref(''); const osmSrc = ref(osmBase+'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
-    function searchMap(){ if(!mapQuery.value) return alert('請輸入搜尋字串'); osmSrc.value='https://www.openstreetmap.org/search?query='+encodeURIComponent(mapQuery.value)+'#map=13'; }
-    function centerDefault(){ osmSrc.value=osmBase+'bbox=139.6,35.6,140.0,35.8&layer=mapnik'; }
+    // map
+    const osmSrc = ref(osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
+    function searchMap() { if(!mapQuery.value) return alert('請輸入搜尋字串'); osmSrc.value='https://www.openstreetmap.org/search?query='+encodeURIComponent(mapQuery.value)+'#map=13'; }
+    function centerDefault() { osmSrc.value = osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik'; }
 
-    function exportData(){ const data={ itinerary:state.itinerary, expenses:state.expenses, shopping:state.shopping, notes:state.notes }; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='travel-data.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
-    function importPrompt(){ const txt=prompt('請貼上 JSON（整個匯出檔內容）以匯入：'); if(!txt) return; try{ const obj=JSON.parse(txt); if(confirm('確定以此資料覆蓋本地資料嗎？')){ state.itinerary=(obj.itinerary||[]).map(it=>({ id:it.id||cryptoId(), date:it.date||(it.time?it.time.slice(0,10):''), time:it.time||'', title:it.title||'', note:it.note||'' })); state.expenses=(obj.expenses||[]).map(e=>({ id:e.id||cryptoId(), title:e.title||'', amount:Number(e.amount||0), date:e.date||'' })); state.shopping=(obj.shopping||[]).map(s=>({ id:s.id||cryptoId(), text:s.text||'', note:s.note||'', done:!!s.done })); state.notes=(obj.notes||[]).map(n=>({ id:n.id||cryptoId(), title:n.title||'', content:n.content||'', date:n.date||(new Date()).toLocaleString() })); save(); alert('匯入完成'); } } catch(e){ alert('解析錯誤：請確認為有效的 JSON'); } }
+    // export/import
+    function exportData(){ const data={itinerary:state.itinerary, expenses:state.expenses, shopping:state.shopping, notes:state.notes}; const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='travel-data.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+    function importPrompt(){ const txt=prompt('請貼上 JSON：'); if(!txt) return; try{ const obj=JSON.parse(txt); if(confirm('確定覆蓋本地資料？')){ state.itinerary=(obj.itinerary||[]).map(it=>({id:it.id||cryptoId(), date:it.date||(it.time?it.time.slice(0,10):''), time:it.time||'', title:it.title||'', note:it.note||''})); state.expenses=(obj.expenses||[]).map(e=>({id:e.id||cryptoId(), title:e.title||'', amount:Number(e.amount||0), date:e.date||''})); state.shopping=(obj.shopping||[]).map(s=>({id:s.id||cryptoId(), text:s.text||'', note:s.note||'', done:!!s.done})); state.notes=(obj.notes||[]).map(n=>({id:n.id||cryptoId(), title:n.title||'', content:n.content||'', date:n.date||(new Date()).toLocaleString()})); save(); alert('匯入完成');}}catch(e){alert('解析錯誤');} }
 
-    function resetAll(){ if(!confirm('將清除所有本機資料，確定？')) return; state.itinerary=[]; state.expenses=[]; state.shopping=[]; state.notes=[]; save(); }
+    function resetAll(){ if(!confirm('清除所有資料？')) return; state.itinerary=[]; state.expenses=[]; state.shopping=[]; state.notes=[]; save(); }
 
     onMounted(()=>{ load(); window.addEventListener('beforeunload', save); });
 
     return {
-      tab, mapQuery, osmSrc,
+      tab,
+      mapQuery, osmSrc,
       itinerary: Vue.toRefs(state).itinerary,
       expenses: Vue.toRefs(state).expenses,
       shopping: Vue.toRefs(state).shopping,
@@ -462,9 +460,9 @@ createApp({
       searchMap, centerDefault,
       exportData, importPrompt, resetAll,
       groupedItinerary,
-      activeBtn: 'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
-      inactiveBtn: 'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
+      activeBtn:'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
+      inactiveBtn:'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
     }
   }
-}).mount('#app')
+}).mount('#app');
 </script>
