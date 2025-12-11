@@ -5,29 +5,47 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>簡約行程 / 工具單頁 App</title>
 
+  <!-- Google Font: Noto Sans JP（友好的日語字重）-->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+
   <!-- Tailwind Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Tailwind 客製色系（淺藍主題）
+    /* Tailwind 客製色系（主色 #9DC0DF）與樣式擴充 */
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             primary: {
-              50:  '#f2f9ff',
-              100: '#e6f3ff',
-              200: '#bfe3ff',
-              300: '#99d3ff',
-              400: '#66bfff',
-              500: '#3aaaff',
-              600: '#2f8de6',
-              700: '#2267b3',
-              800: '#174780',
-              900: '#0b274d'
+              50:  '#f3f8fb',
+              100: '#e6f1f7',
+              200: '#cfe2ef',
+              300: '#b7d3e7',
+              400: '#9fc4df',
+              500: '#9dc0df', /* 主色 */
+              600: '#7aa7c8',
+              700: '#588aa0',
+              800: '#3e6577',
+              900: '#233c4b'
+            },
+            // 補充日系常用柔和灰
+            softgray: {
+              50: '#fbfbfc',
+              100: '#f6f7f8',
+              200: '#eceef0',
+              300: '#e2e5e8',
+              400: '#cfd6db',
+              500: '#bfc9cf'
             }
           },
           borderRadius: {
-            'xl': '1rem'
+            'xl': '1rem',
+            'xxl': '1.25rem'
+          },
+          boxShadow: {
+            'soft': '0 8px 20px rgba(36,64,86,0.06)', /* 柔和偏藍陰影 */
+            'soft-sm': '0 4px 12px rgba(36,64,86,0.04)'
           }
         }
       }
@@ -36,14 +54,33 @@
 
   <!-- Vue 3 (global build) -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+
   <style>
-    /* 手機 App feel */
+    /* 全局：日系字體與背景柔和處理 */
     html,body,#app { height:100%; }
-    body { background: linear-gradient(180deg, #f8fcff 0%, #ffffff 100%); -webkit-font-smoothing:antialiased; font-family: system-ui, -apple-system, "Helvetica Neue", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial; }
-    /* 卡片陰影 */
-    .card-shadow { box-shadow: 0 6px 18px rgba(24, 63, 103, 0.08); }
-    /* 滑動內部 (避免 iOS 跳動) */
+    body {
+      background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+      -webkit-font-smoothing:antialiased;
+      font-family: "Noto Sans JP", system-ui, -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Arial;
+      color: #263849;
+    }
+
+    /* 卡片：更柔的圓角與陰影 */
+    .card-shadow { box-shadow: 0 8px 20px rgba(36,64,86,0.06); border-radius: 14px; }
+    .card-soft { box-shadow: 0 4px 12px rgba(36,64,86,0.04); border-radius: 12px; }
+
+    /* 按鈕過渡與 focus */
+    .btn-focus:focus { outline: none; box-shadow: 0 0 0 4px rgba(157,192,223,0.22); border-radius: 12px; }
+    .btn-ghost { background: transparent; border: 1px solid rgba(157,192,223,0.12); }
+
+    /* 標題與文字風格 */
+    h1, h2 { letter-spacing: -0.01em; }
+    .muted { color: #7b8790; }
+
+    /* 手機 App feel */
     .scroll-area { -webkit-overflow-scrolling: touch; overflow-y: auto; }
+    /* 微細分割線使用淺灰色 */
+    .soft-divider { border-color: rgba(36,64,86,0.06); }
   </style>
 </head>
 <body>
@@ -94,7 +131,7 @@
               </div>
             </div>
 
-            <div class="p-3 bg-primary-50 rounded-xl">
+            <div class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
               <input v-model="newItin.title" placeholder="行程標題" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
               <input v-model="newItin.time" placeholder="時間 (例如：2026-01-10 09:00)" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
               <textarea v-model="newItin.note" rows="2" placeholder="備註" class="w-full p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200"></textarea>
