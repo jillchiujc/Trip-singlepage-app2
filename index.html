@@ -89,7 +89,7 @@
       <!-- header -->
       <header class="px-4 py-5 border-b border-gray-100 flex items-center justify-between">
         <div>
-          <h1 class="text-lg font-semibold text-slate-800">旅遊誡條:</h1>
+          <h1 class="text-lg font-semibold text-slate-800">福岡2026旅遊誡條:</h1>
           <p class="text-sm text-slate-400">
   絕不表現不耐煩的態度<br>
   絕不對自己沒安排的行程指手畫腳<br>
@@ -139,7 +139,21 @@
 
             <div class="p-3 bg-primary-50 rounded-xl">
               <input v-model="newItin.title" placeholder="行程標題" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
-              <input v-model="newItin.time" placeholder="時間 (例如：2026-01-10 09:00)" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
+<input 
+  type="date" 
+  v-model="newItin.date" 
+  class="w-full mb-2 p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-200" 
+/>
+
+<input 
+  type="time" 
+  v-model="newItin.time24hr" 
+  class="w-full mb-2 p-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-200" 
+/>
+
+<p v-if="newItin.date" class="text-xs text-gray-500 mb-2">
+  已選時間：**{{ formattedDateTime }}**
+</p>
               <textarea v-model="newItin.note" rows="2" placeholder="備註" class="w-full p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200"></textarea>
               <div class="mt-2 flex gap-2">
                 <button @click="addItin" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">新增行程</button>
