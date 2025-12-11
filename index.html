@@ -81,6 +81,9 @@
     .scroll-area { -webkit-overflow-scrolling: touch; overflow-y: auto; }
     /* 微細分割線使用淺灰色 */
     .soft-divider { border-color: rgba(36,64,86,0.06); }
+
+    /* 小元件微調 */
+    .input-row > * { min-width: 0; } /* allow flex inputs to shrink nicely */
   </style>
 </head>
 <body>
@@ -113,8 +116,45 @@
             <div class="text-sm text-slate-400">自動儲存</div>
           </div>
 
-          <div class="space-y-3">
-            <div v-for="(item, idx) in itinerary" :key="item.id" class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
+          <!-- Days 選擇（橫向） -->
+          <div class="mb-3">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2">
+              <button
+                v-for="(d, i) in days"
+                :key="d.id"
+                @click="currentDay = i"
+                class="px-4 py-2 whitespace-nowrap rounded-xl text-sm transition border"
+                :class="currentDay===i
+                  ? 'bg-primary-500 text-white shadow-soft'
+                  : 'bg-white text-slate-600 border-primary-100 shadow-soft-sm'"
+              >
+                Day {{ i+1 }}
+                <div class="text-xs text-slate-400 mt-1">
+                  {{ d.date ? formatDateShort(d.date) + ' ' + weekdayName(d.date) : '未設定日期' }}
+                </div>
+              </button>
+
+              <button
+                @click="addDay"
+                class="px-3 py-2 rounded-xl bg-primary-50 text-primary-700 border border-primary-200 text-sm"
+                title="新增一天"
+              >＋ Day</button>
+
+              <button
+                @click="removeDay"
+                class="px-3 py-2 rounded-xl bg-white border text-red-500 text-sm"
+                :disabled="days.length===1"
+              >刪除</button>
+            </div>
+          </div>
+
+          <!-- 當前 Day 的行程列表 -->
+          <div class="space-y-3 mb-4">
+            <div v-if="days[currentDay].items.length===0" class="p-3 bg-primary-50 rounded-xl text-sm text-slate-500">
+              目前 Day {{ currentDay + 1 }} 尚無行程，請在下方新增。
+            </div>
+
+            <div v-for="(item, idx) in days[currentDay].items" :key="item.id" class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
               <div class="flex-shrink-0">
                 <div class="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 font-semibold">
                   {{ idx+1 }}
@@ -126,19 +166,52 @@
                 <div class="text-xs text-slate-500 mt-2">{{ item.note }}</div>
               </div>
               <div class="flex flex-col gap-2">
-                <button @click="editItin(idx)" class="text-sm text-primary-600">編輯</button>
-                <button @click="deleteItin(idx)" class="text-sm text-red-500">刪除</button>
+                <button @click="editItin(currentDay, idx)" class="text-sm text-primary-600">編輯</button>
+                <button @click="deleteItin(currentDay, idx)" class="text-sm text-red-500">刪除</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 新增行程卡（橫向 Row，灰色邊框） -->
+          <div class="p-3 bg-white border rounded-xl card-soft">
+            <div class="mb-3 text-sm text-slate-600">新增行程（請選擇日期與時間）</div>
+
+            <div class="space-y-3">
+              <!-- 日期 Row -->
+              <div class="flex gap-3 input-row">
+                <input
+                  v-model="days[currentDay].date"
+                  type="date"
+                  class="flex-1 p-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+                <input
+                  v-model="newItin.title"
+                  type="text"
+                  placeholder="行程標題"
+                  class="flex-1 p-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+              </div>
+
+              <!-- 時間與備註 Row -->
+              <div class="flex gap-3 input-row">
+                <input
+                  v-model="newItin.time"
+                  type="time"
+                  class="w-1/3 p-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
+                <input
+                  v-model="newItin.note"
+                  type="text"
+                  placeholder="備註"
+                  class="flex-1 p-2 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-200"
+                />
               </div>
             </div>
 
-            <div class="p-3 bg-white border rounded-xl card-shadow flex items-start gap-3">
-              <input v-model="newItin.title" placeholder="行程標題" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
-              <input v-model="newItin.time" placeholder="時間 (例如：2026-01-10 09:00)" class="w-full mb-2 p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200" />
-              <textarea v-model="newItin.note" rows="2" placeholder="備註" class="w-full p-2 rounded-md border border-transparent focus:outline-none focus:ring-2 focus:ring-primary-200"></textarea>
-              <div class="mt-2 flex gap-2">
-                <button @click="addItin" class="flex-1 py-2 rounded-lg bg-primary-600 text-white">新增行程</button>
-                <button @click="clearNewItin" class="py-2 px-3 rounded-lg bg-white border">清除</button>
-              </div>
+            <!-- 底部按鈕：移到最底 -->
+            <div class="mt-4 flex gap-3 justify-end">
+              <button @click="clearNewItin" class="py-2 px-4 rounded-lg bg-white border text-slate-600">清除</button>
+              <button @click="addItin" class="py-2 px-4 rounded-lg bg-primary-600 text-white">新增行程</button>
             </div>
           </div>
         </section>
@@ -257,18 +330,19 @@
   </div>
 
   <script>
-    const { createApp, ref, reactive, onMounted } = Vue;
+    const { createApp, ref, reactive, onMounted, computed } = Vue;
 
     createApp({
       setup() {
         const tab = ref('itinerary');
 
         // data keys
-        const STORAGE_KEY = 'travel_app_v1';
+        const STORAGE_KEY = 'travel_app_v1_days';
 
         // initial state
         const state = reactive({
-          itinerary: [],
+          // days: 每天包含 date, time (optional), items:[{id,title,time,note}]
+          days: [],
           expenses: [],
           shopping: [],
           notes: []
@@ -280,9 +354,17 @@
         const newShop = reactive({ text:'', note:'', done:false });
         const newNote = reactive({ title:'', content:'', date:'' });
 
+        // Days control
+        const currentDay = ref(0);
+
         // map search
         const mapQuery = ref('');
         const osmBase = 'https://www.openstreetmap.org/export/embed.html?';
+
+        // helpers
+        function cryptoId() {
+          return Math.random().toString(36).slice(2, 10);
+        }
 
         // load from localStorage
         function load() {
@@ -290,44 +372,72 @@
             const raw = localStorage.getItem(STORAGE_KEY);
             if (raw) {
               const obj = JSON.parse(raw);
-              state.itinerary = obj.itinerary || [];
+              state.days = obj.days && obj.days.length ? obj.days : [{ id: cryptoId(), date:'', items:[] }];
               state.expenses = obj.expenses || [];
               state.shopping = obj.shopping || [];
               state.notes = obj.notes || [];
             } else {
-              // sample default
-              state.itinerary = [
-                { id: cryptoId(), title:'抵達福岡機場', time:'2026-01-10 09:30', note:'取行李、購票' }
+              // default: one day with a sample item
+              state.days = [
+                {
+                  id: cryptoId(),
+                  date: '2026-01-10',
+                  items: [
+                    { id: cryptoId(), title:'抵達福岡機場', time: '09:30', note:'取行李、購票' }
+                  ]
+                }
               ];
+              state.expenses = [];
+              state.shopping = [];
+              state.notes = [];
             }
+            // ensure currentDay in bounds
+            if (currentDay.value >= state.days.length) currentDay.value = state.days.length - 1;
           } catch (e) {
             console.error('load error', e);
+            state.days = [{ id: cryptoId(), date:'', items:[] }];
           }
         }
 
         function save() {
-          const obj = { itinerary: state.itinerary, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
+          const obj = { days: state.days, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
           localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
         }
 
-        // helpers
-        function cryptoId() {
-          return Math.random().toString(36).slice(2, 10);
+        // Day operations
+        function addDay() {
+          state.days.push({ id: cryptoId(), date:'', items:[] });
+          currentDay.value = state.days.length - 1;
+          save();
+        }
+        function removeDay() {
+          if (state.days.length <= 1) return;
+          if (!confirm('確定刪除此天？該天所有行程將被移除')) return;
+          state.days.splice(currentDay.value, 1);
+          currentDay.value = Math.max(0, currentDay.value - 1);
+          save();
         }
 
-        // itinerary actions
+        // itinerary actions (per day)
         function addItin() {
+          const day = state.days[currentDay.value];
           if (!newItin.title) return alert('請輸入行程標題');
-          state.itinerary.push({ id: cryptoId(), title: newItin.title, time: newItin.time || '', note: newItin.note || '' });
-          clearNewItin();
+          // ensure day exists
+          if (!day) {
+            alert('找不到目前的 Day，請先新增 Day');
+            return;
+          }
+          day.items.push({ id: cryptoId(), title: newItin.title, time: newItin.time || '', note: newItin.note || '' });
+          // clear inputs
+          newItin.title = ''; newItin.time = ''; newItin.note = '';
           save();
         }
         function clearNewItin(){ newItin.title=''; newItin.time=''; newItin.note=''; }
-        function deleteItin(i){ if (confirm('確定刪除此行程？')) { state.itinerary.splice(i,1); save(); } }
-        function editItin(i){
-          const it = state.itinerary[i];
-          const t = prompt('編輯標題', it.title);
-          if (t !== null) { it.title = t; save(); }
+        function deleteItin(dayIdx, idx){ if (confirm('確定刪除此行程？')) { state.days[dayIdx].items.splice(idx,1); save(); } }
+        function editItin(dayIdx, idx){
+          const it = state.days[dayIdx].items[idx];
+          const newTitle = prompt('編輯標題', it.title);
+          if (newTitle !== null) { it.title = newTitle; save(); }
         }
 
         // expenses
@@ -339,7 +449,7 @@
         function clearNewExpense(){ newExpense.title=''; newExpense.amount=0; newExpense.date=''; }
         function removeExpense(i){ if(confirm('刪除此支出？')) { state.expenses.splice(i,1); save(); } }
         const totalExpenses = () => state.expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-        const totalExpensesFormatted = Vue.computed(()=> totalExpenses().toFixed(2));
+        const totalExpensesFormatted = computed(()=> totalExpenses().toFixed(2));
 
         // shopping
         function addShop(){ if (!newShop.text) return alert('請輸入品項'); state.shopping.push({ id:cryptoId(), text:newShop.text, note:newShop.note || '', done:false }); clearNewShop(); save(); }
@@ -352,22 +462,19 @@
         function removeNote(i){ if (confirm('刪除此備忘？')) { state.notes.splice(i,1); save(); } }
 
         // map
-        const osmSrc = Vue.ref(osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
+        const osmSrc = ref(osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik');
         function searchMap(){
           if (!mapQuery.value) return alert('請輸入搜尋字串');
-          // 使用 Nominatim 搜尋（直接呼叫 openstreetmap 查詢 URL）
           const q = encodeURIComponent(mapQuery.value);
-          // 這裡使用 openstreetmap 的搜尋結果頁面，以方便在 iframe 顯示
           osmSrc.value = 'https://www.openstreetmap.org/search?query=' + q + '#map=13';
         }
         function centerDefault() { osmSrc.value = osmBase + 'bbox=139.6,35.6,140.0,35.8&layer=mapnik'; }
 
         // export / import
         function exportData(){
-          const data = { itinerary: state.itinerary, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
+          const data = { days: state.days, expenses: state.expenses, shopping: state.shopping, notes: state.notes };
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
-          // 在 iOS 上使用 a 標籤觸發下載
           const a = document.createElement('a');
           a.href = url;
           a.download = 'travel-data.json';
@@ -382,10 +489,12 @@
           try {
             const obj = JSON.parse(txt);
             if (confirm('確定以此資料覆蓋本地資料嗎？')) {
-              state.itinerary = obj.itinerary || [];
+              state.days = obj.days || [{ id: cryptoId(), date:'', items:[] }];
               state.expenses = obj.expenses || [];
               state.shopping = obj.shopping || [];
               state.notes = obj.notes || [];
+              // reset currentDay if needed
+              if (currentDay.value >= state.days.length) currentDay.value = Math.max(0, state.days.length - 1);
               save();
               alert('匯入完成');
             }
@@ -396,14 +505,35 @@
 
         function resetAll(){
           if (!confirm('將清除所有本機資料，確定？')) return;
-          state.itinerary = []; state.expenses=[]; state.shopping=[]; state.notes=[];
+          state.days = [{ id: cryptoId(), date:'', items:[] }];
+          state.expenses = []; state.shopping = []; state.notes = [];
+          currentDay.value = 0;
           save();
         }
 
-        // watch & load
+        // small util: formatted short date
+        function formatDateShort(d) {
+          if (!d) return '';
+          try {
+            const dt = new Date(d);
+            const y = dt.getFullYear();
+            const m = String(dt.getMonth()+1).padStart(2,'0');
+            const day = String(dt.getDate()).padStart(2,'0');
+            return `${y}/${m}/${day}`;
+          } catch (e) { return d; }
+        }
+        function weekdayName(d) {
+          if (!d) return '';
+          try {
+            const dt = new Date(d);
+            const names = ['日','一','二','三','四','五','六'];
+            return '（週' + names[dt.getDay()] + '）';
+          } catch(e){ return ''; }
+        }
+
+        // on mount
         onMounted(()=> {
           load();
-          // auto-save on unload
           window.addEventListener('beforeunload', save);
         });
 
@@ -411,17 +541,20 @@
         return {
           tab,
           mapQuery, osmSrc,
-          itinerary: Vue.toRefs(state).itinerary,
-          expenses: Vue.toRefs(state).expenses,
-          shopping: Vue.toRefs(state).shopping,
-          notes: Vue.toRefs(state).notes,
+          days: state.days,
+          expenses: state.expenses,
+          shopping: state.shopping,
+          notes: state.notes,
           newItin, newExpense, newShop, newNote,
+          currentDay,
+          addDay, removeDay,
           addItin, clearNewItin, deleteItin, editItin,
           searchMap, centerDefault,
           addExpense, clearNewExpense, removeExpense, totalExpensesFormatted,
           addShop, clearNewShop, removeShopping,
           addNote, clearNewNote, removeNote,
           exportData, importPrompt, resetAll,
+          formatDateShort, weekdayName,
           activeBtn: 'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
           inactiveBtn: 'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
         }
