@@ -302,10 +302,11 @@ createApp({
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const obj = JSON.parse(raw);
+          // 確保每筆 itinerary 都有 id, date, time, title, note
           state.itinerary = (obj.itinerary || []).map(it => {
             return {
               id: it.id || cryptoId(),
-              date: it.date || (it.time ? (it.time.slice(0,10)) : ''),
+              date: it.date || (it.time ? (it.time.slice(0,10)) : ''), // 若舊資料無 date，嘗試從 time 取日期
               time: it.time || '',
               title: it.title || '',
               note: it.note || ''
@@ -315,6 +316,7 @@ createApp({
           state.shopping = (obj.shopping || []).map(s => ({ id: s.id || cryptoId(), text: s.text || '', note: s.note || '', done: !!s.done }));
           state.notes = (obj.notes || []).map(n => ({ id: n.id || cryptoId(), title: n.title || '', content: n.content || '', date: n.date || (new Date()).toLocaleString() }));
         } else {
+          // 範例預設
           state.itinerary = [
             { id: cryptoId(), date: '2026-01-10', time:'09:30', title:'抵達福岡機場', note:'取行李、購票' }
           ];
@@ -349,6 +351,7 @@ createApp({
       });
       clearNewItin();
       save();
+      // 自動切換到該日期可視需求實作（此處不自動跳）
     }
 
     function clearNewItin() {
@@ -361,15 +364,20 @@ createApp({
     function editItinById(id) {
       const it = state.itinerary.find(x => x.id === id);
       if (!it) return;
+      // 使用 prompt 做簡單編輯（可改為 modal）
       const title = prompt('編輯標題', it.title);
-      if (title === null) return;
+      if (title === null) return; // 使用者取消則結束
       it.title = title;
+
       const date = prompt('編輯日期（YYYY-MM-DD）', it.date || '');
       if (date !== null) it.date = date;
+
       const time = prompt('編輯時間', it.time || '');
       if (time !== null) it.time = time;
+
       const note = prompt('編輯備註', it.note || '');
       if (note !== null) it.note = note;
+
       save();
     }
 
@@ -390,6 +398,7 @@ createApp({
         if (!groups[d]) groups[d] = [];
         groups[d].push(it);
       });
+      // sort items inside each date by time (若無 time 則放後面)
       Object.keys(groups).forEach(d => {
         groups[d].sort((a, b) => {
           const ta = (a.time || '').toString();
@@ -400,34 +409,15 @@ createApp({
           return ta.localeCompare(tb);
         });
       });
+      // build sorted object by date ascending (YYYY-MM-DD 比較可行)
       const sortedDates = Object.keys(groups).sort((a,b) => {
+        // special handling for '未指定日期' -> 放最後
         if (a === '未指定日期') return 1;
         if (b === '未指定日期') return -1;
         return a.localeCompare(b);
       });
       const result = {};
       sortedDates.forEach(d => { result[d] = groups[d]; });
-      return result;
-    });
-
-    // --------------------------
-    // grouped with weekday & Day
-    // --------------------------
-    const groupedItineraryWithLabel = computed(() => {
-      const sortedKeys = Object.keys(groupedItinerary.value);
-      const result = {};
-      const weekLabels = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-      sortedKeys.forEach((dateStr, idx) => {
-        const items = groupedItinerary.value[dateStr];
-        let display = dateStr;
-        if (dateStr !== '未指定日期') {
-          const dObj = new Date(dateStr);
-          const week = weekLabels[dObj.getDay()];
-          const dayNum = idx + 1;
-          display = `${dateStr} (${week}) - Day ${dayNum}`;
-        }
-        result[display] = items;
-      });
       return result;
     });
 
@@ -595,7 +585,7 @@ createApp({
       addNote, clearNewNote, removeNote,
       searchMap, centerDefault,
       exportData, importPrompt, resetAll,
-      groupedItineraryWithLabel, // <-- template 使用此 computed
+      groupedItinerary,
       activeBtn: 'px-3 py-2 rounded-xl bg-primary-600 text-white text-sm',
       inactiveBtn: 'px-3 py-2 rounded-xl bg-white text-primary-600 border border-primary-100 text-sm'
     }
